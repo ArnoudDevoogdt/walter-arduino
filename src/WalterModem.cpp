@@ -1116,7 +1116,7 @@ bool WalterModem::_checkPayloadComplete()
 
 #pragma region CME_ERROR
     resultPos = (char *)memmem(
-        &_parserData.buf->data[_receiveExpected], _parserData.buf->size, "\r\n+CME ERROR:", 13);
+        &_parserData.buf->data[_receiveExpected], _parserData.buf->size, "+CME ERROR:", 11);
 
     if (resultPos && _parserData.buf->size >= _receiveExpected) {
         //ESP_LOGI("WalterParser", "payload CME error (OK)");
@@ -1203,7 +1203,7 @@ void WalterModem::_parseRxData(char *rxData, size_t len)
         if (dataPrompt || httpPrompt) {
             _queueRxBuffer();
         }
-    }
+    } 
 }
 
 #ifdef ARDUINO
@@ -3874,7 +3874,7 @@ bool WalterModem::tlsConfigProfile(
             sprintf((char *)stringsBuffer->data + stringsBuffer->size, "%d", clientPrivKeyId);
     }
     stringsBuffer->size +=
-        sprintf((char *)stringsBuffer->data + stringsBuffer->size, ",\"\",\"\",0,0,0");
+        sprintf((char *)stringsBuffer->data + stringsBuffer->size, ",\"\",\"\",0,1,0");
 
     _runCmd(
         arr((const char *)stringsBuffer->data),
