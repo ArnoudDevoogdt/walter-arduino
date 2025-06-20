@@ -199,6 +199,30 @@ bool WalterModem::socketConfigExtended(
     _returnAfterReply();
 }
 
+bool WalterModem::socketConfigTLS(
+    int socketId,
+    int profileId,
+    bool enableTLS,
+    WalterModemRsp *rsp,
+    walterModemCb cb,
+    void *args)
+{
+    WalterModemSocket *sock = _socketGet(socketId);
+    if (sock == NULL) {
+        _returnState(WALTER_MODEM_STATE_NO_SUCH_SOCKET);
+    }
+
+    _runCmd(
+        arr("AT+SQNSSCFG=", _digitStr(sock->id), ",", enableTLS ? "1" : "0",
+            ",", _digitStr(profileId)),
+        "OK",
+        rsp,
+        cb,
+        args,
+        NULL);
+    _returnAfterReply();
+}
+
 bool WalterModem::socketDial(
     const char *remoteHost,
     uint16_t remotePort,
@@ -395,6 +419,7 @@ bool WalterModem::socketDidRing(
         if (targetBuf != nullptr && targetBufSize != 0) {
             memcpy(targetBuf, sock->data, targetBufSize);
         }
+        return true;
         return true;
     }
 
