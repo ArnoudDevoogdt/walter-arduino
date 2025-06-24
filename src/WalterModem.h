@@ -1889,6 +1889,18 @@ typedef struct {
     uint16_t curMessageId = 1;
 
     /**
+     * @brief The UDP socket ID of the bluecherry CoAP socket.
+     */
+    int bcSocketId = 0;
+
+    /**
+     * @brief The maximum token length used for CoAP messages, in bytes.
+     * 
+     * Minimum 0, Maximum 8.
+     */
+    uint8_t coapMaxTokenLen = 0;
+
+    /**
      * @brief The TLS profile used by the BlueCherry connection.
      */
     uint8_t tlsProfileId;
@@ -3481,12 +3493,17 @@ private:
     static bool _blueCherryProcessEvent(uint8_t *data, uint8_t len);
     
     /**
+     * @brief Connect to the bluecherry cloud by opening a UDP socket
      * 
+     * @return True if successfully established connection over the socket, False if no socket was
+     * available or the connection couldn't be established.
      */
     static bool _blueCherryCoapConnect();
 
     /**
+     * @brief Send data to bluecherry over a UDP socket using a custom tailored CoAP protocol.
      * 
+     * @return True on success, False otherwise.
      */
     static bool _blueCherryCoapSend(uint8_t code, uint16_t payloadLen, const uint8_t *payload);
 #endif
@@ -4663,6 +4680,17 @@ public:
 
 #pragma region SOCKETS
 #if CONFIG_WALTER_MODEM_ENABLE_SOCKETS
+    
+    /**
+     * @brief Reserve a socket and return it's identifier number.
+     * 
+     * This function will reserve a socket identification number, the socket will not yet be
+     * configured in the modem and expects to be used later for configuration.
+     *
+     * @return Socket ID on success (1-6), NULL if no socket was available. 
+     */
+    static int reserveSocketId();
+
     /**
      * @brief Configure a new socket in a certain PDP context.
      *
@@ -4677,6 +4705,7 @@ public:
      * @param exchangeTimeout The maximum number of seconds this socket can be inactive.
      * @param connTimeout The maximum number of seconds this socket can try to connect.
      * @param sendDelayMs The number of milliseconds send delay.
+     * @param socketId The socket identifier. -1 to reserve a new one.
      *
      * @return True on success, false otherwise.
      */
@@ -4688,12 +4717,13 @@ public:
         uint16_t mtu = 300,
         uint16_t exchangeTimeout = 90,
         uint16_t connTimeout = 60,
-        uint16_t sendDelayMs = 5000);
+        uint16_t sendDelayMs = 5000,
+        int socketId = -1);
 
     /**
      * @brief Configure the socket extended parameters.
      *
-     * This function confiures the sockett extended parameters.
+     * This function configures the socket extended parameters.
      *
      * @param rsp Optional modem response structure to save the result in.
      * @param cb Optional callback function, if set this function will not block.
@@ -4885,7 +4915,9 @@ public:
      *
      * @param socketId  The id of the socket to wait for the ring or -1 to re-use the last one.
      * @param targetBufSize The size of the targetBuffer.
-     * @param targetBuf The targetBuffer to store the received data in.abort
+     * @param targetBuf The targetBuffer to store the received data in.
+     * @param receivedSize When not set to nullptr this is set to the number of actual received
+     * bytes.
      *
      * @return True on success, false otherwise.
      *
