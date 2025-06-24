@@ -107,6 +107,15 @@ void WalterModem::_dispatchEvent(
     #pragma endregion
 
     #pragma region PUBLIC_METHODS
+int WalterModem::reserveSocketId() {
+    WalterModemSocket *sock = _socketReserve();
+    if (sock == NULL) {
+        return NULL;
+    }
+
+    return sock->id;
+}
+
 bool WalterModem::socketConfig(
     WalterModemRsp *rsp,
     walterModemCb cb,
@@ -115,12 +124,21 @@ bool WalterModem::socketConfig(
     uint16_t mtu,
     uint16_t exchangeTimeout,
     uint16_t connTimeout,
-    uint16_t sendDelayMs)
+    uint16_t sendDelayMs,
+    int socketId)
 {
-    WalterModemSocket *sock = _socketReserve();
+    WalterModemSocket *sock = NULL;
+
+    if (socketId == -1) {
+        sock = _socketReserve();
+    } else {
+        sock = _socketGet(socketId);
+    }
+
     if (sock == NULL) {
         _returnState(WALTER_MODEM_STATE_NO_FREE_SOCKET);
     }
+
 
     sock->pdpContextId = pdpCtxId;
     sock->mtu = mtu;
@@ -418,6 +436,10 @@ bool WalterModem::socketDidRing(
 
         if (targetBuf != nullptr && targetBufSize != 0) {
             memcpy(targetBuf, sock->data, targetBufSize);
+            if(receivedSize != NULL) {
+                *receivedSize = sock->dataReceived;
+            }
+            return true;
         }
         return true;
         return true;
