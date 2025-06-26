@@ -431,13 +431,15 @@ bool WalterModem::socketDidRing(
 
     if (sock->didRing) {
 
-        if(receivedSize != NULL) {
-            *receivedSize = sock->dataReceived;
+        if(dataReceived != NULL) {
+            *dataReceived = sock->dataReceived;
         }
 
         if (targetBuf != nullptr && targetBufSize != 0) {
             memcpy(targetBuf, sock->data, targetBufSize);
         }
+        
+        sock->didRing = false;
 
         return true;
     }
