@@ -2623,6 +2623,11 @@ void WalterModem::_processQueueRsp(WalterModemCmd *cmd, WalterModemBuffer *buff)
         }
 
         _dispatchEvent(WALTER_MODEM_SOCKET_EVENT_RING, sock->id, sock->dataReceived, sock->data);
+#if CONFIG_WALTER_MODEM_ENABLE_BLUE_CHERRY
+        if(sock->id == _blueCherry.bcSocketId) {
+            _blueCherrySocketEventHandler(WALTER_MODEM_SOCKET_EVENT_RING, sock->dataReceived, sock->data);
+        }
+#endif
     }
 
     if (_buffStartsWith(buff, "+SQNSRECV: ")) {
@@ -2964,6 +2969,14 @@ bool WalterModem::_processOtaChunkEvent(uint8_t *data, uint16_t len)
 {
     if (!_blueCherry.otaSize || len == 0 || _blueCherry.otaProgress + len > _blueCherry.otaSize) {
         ESP_LOGD("WalterModem", "OTA: cancelled because empty chunk or chunk beyond update size");
+        /**
+         * TODO: Replace hard reset with immediate response to bluecherry that OTA was aborted.
+         * 
+         * Reason for hard reset: The cloud will continue to send OTA data and assume it
+         * completes successfully unless the connection is aborted.
+         */
+        // vTaskDelay(5000);
+        // esp_restart();
         return true;
     }
 
